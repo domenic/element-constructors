@@ -17,3 +17,5 @@ These are the invariants we've written down so far, although I imagine others ar
 4. Elements whose namespace is the HTML namespace must be instances of `HTMLElement`.
 
 5. Elements in the HTML namespace which do not appear in the list of HTML tag names (including possibly-registered custom elements) must be own-instances of `HTMLUnknownElement`.
+
+6. Any object which could be produced by the HTML parser (or other APIs, but usually the parser is the most lenient) must be able to be produced with the relevant constructor. (If this requirement is in conflict with any of 1-5, please let me know!) An example of this would be that you must be able to create an Element with local name `` a` `` via the `HTMLUnknownElement` constructor, since such an element comes into being via `` document.body.innerHTML = <a`>foo<a`> ``.

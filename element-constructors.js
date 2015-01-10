@@ -194,13 +194,21 @@ class Document extends Node {
 // Examples:
 
 // Creating arbitrary elements which don't have any class registered for them works fine:
-new Element("foo", document);
+new Element("foo", document); // namespace = null
 new Element("foo", document, "http://examplens.com/");
 new Element("foo", document, "http://examplens.com/", "prefix");
 
 document.createElementNS(null, "foo");
 document.createElementNS("http://examplens.com/", "foo");
 document.createElementNS("http://examplens.com/", "prefix:foo");
+
+// The element constructor is more lenient than createElement on validating names
+new Element("foo`", document); // works
+document.createElementNS(null, "foo`"); // throws
+
+// Same for HTMLUnknownElement
+new HTMLUnknownElement("foo`", document); // works
+document.createElement("foo`"); // throws
 
 // What about a <p> element?
 new Element("p", document); // works because namespace = null
