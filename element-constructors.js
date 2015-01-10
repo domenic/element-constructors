@@ -71,17 +71,17 @@ class Element extends Node {
     this@[[attributes]] = new NamedNodeMap();
   }
 
-  static [Element.createElementFactory](localName, document, namespace, prefix) {
+
+  // This symbol will allow subclasses to specify how to create instances of themselves when desired by
+  // document.createElement, document.createElementNS, or the parser. If those cases used the constructors directly,
+  // that would unnecessarily constrain the signature of the constructor (and the constructor of any subclass!) to
+  // always be (localName, document, namespace, prefix).
+  static [Symbol.species](localName, document, namespace, prefix) {
     return new this(localName, document, namespace, prefix);
   }
 
   ...
 }
-
-// This symbol will allow subclasses to specify how to create instances of themselves when desired by
-// document.createElement and document.createElementNS. If those methods used the constructors directly, that would
-// unnecessarily constrain the signature of the constructor to always be (localName, document, namespace, prefix).
-Element.createElementFactory = new Symbol();
 
 class HTMLElement extends Element {
   constructor(localName, document, prefix = null) {
@@ -101,7 +101,7 @@ class HTMLElement extends Element {
     super(localName, document, HTML_NS);
   }
 
-  static [Element.createElementFactory](localName, document, namespace, prefix) {
+  static [Symbol.species](localName, document, namespace, prefix) {
     if (namespace !== HTML_NS) {
       throw new TypeError("HTML elements cannot be created except in the HTML namespace");
     }
@@ -127,7 +127,7 @@ class HTMLParagraphElement extends HTMLElement {
     super("p", document, prefix);
   }
 
-  static [Element.createElementFactory](localName, document, namespace, prefix) {
+  static [Symbol.species](localName, document, namespace, prefix) {
     if (localName !== "p") {
       throw new TypeError("HTMLParagraphElement must have local name \"p\"");
     }
@@ -150,7 +150,7 @@ class HTMLQuoteElement extends HTMLElement {
     super(localName, document);
   }
 
-  static [Element.createElementFactory](localName, document, namespace, prefix) {
+  static [Symbol.species](localName, document, namespace, prefix) {
     if (namespace !== HTML_NS) {
       throw new TypeError("HTMLParagraphElement elements cannot be created except in the HTML namespace");
     }
@@ -177,7 +177,7 @@ class Document extends Node {
 
     const Constructor = elementConstructorRegistry.get(localName, HTML_NS);
     assert(Constructor === HTMLElement || Constructor instanceof HTMLElement);
-    return Constructor[Element.createElementFactory](localName, this, HTML_NS, null);
+    return Constructor[Symbol.species](localName, this, HTML_NS, null);
   }
 
   // These mostly delegate to the constructors, but have more validation checks for whatever reason.
@@ -185,7 +185,7 @@ class Document extends Node {
     const { namespace, prefix, localName, qualifiedName } = validateAndExtract(namespaceArg, qualifiedNameArg);
 
     const Constructor = elementConstructorRegistry.get(localName, namespace);
-    return Constructor[Element.createElementFactory](localName, this, namespace, prefix);
+    return Constructor[Symbol.species](localName, this, namespace, prefix);
   }
 
   ...
@@ -227,7 +227,7 @@ new HTMLElement("section", document); // works!
 
 document.createElement("p");
 // works of course, giving back a HTMLParagraphElement, by calling
-// `HTMLParagraphElement[Element.createElementFactory]("p", document, HTML_NS, null)` which returns
+// `HTMLParagraphElement[Symbol.species]("p", document, HTML_NS, null)` which returns
 // `new HTMLParagraphElement(document, null)`
 
 document.createElementNS(HTML_NS, "p");
@@ -235,15 +235,15 @@ document.createElementNS(HTML_NS, "p");
 
 document.createElement("q");
 // works, giving back a HTMLQuoteElement, by calling
-// `HTMLQuoteElement[Element.createElementFactory]("q", document, HTML_NS, null)` which returns
+// `HTMLQuoteElement[Symbol.species]("q", document, HTML_NS, null)` which returns
 // `new HTMLQuoteElement("q", document, null)`
 
 document.createElement("section");
 // works, giving back a HTMLElement, by calling
-// `HTMLElement[Element.createElementFactory]("section", document, HTML_NS, null)` which returns
+// `HTMLElement[Symbol.species]("section", document, HTML_NS, null)` which returns
 // `new HTMLElement("section", document, null)`
 
 document.createElement("foo");
 // works, giving back a HTMLUnkownElement, by calling
-// `HTMLUnkownElement[Element.createElementFactory]("foo", document, HTML_NS, null)` which returns
+// `HTMLUnkownElement[Symbol.species]("foo", document, HTML_NS, null)` which returns
 // `new HTMLUnkownElement("foo", document, null)`
