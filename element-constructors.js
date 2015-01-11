@@ -218,6 +218,7 @@ new HTMLParagraphElement(); // works!
 new Element("q", HTML_NS); // throws TypeError telling you to use new HTMLQuoteElement
 new HTMLElement("q"); // throws TypeError telling you to use new HTMLQuoteElement
 new HTMLQuoteElement("q"); // works!
+new HTMLQuoteElement(); // throws saying localName is required
 
 // <section> element?
 new Element("section", HTML_NS); // throws TypeError telling you to use new HTMLElement
