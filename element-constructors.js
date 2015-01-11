@@ -21,7 +21,8 @@ elementConstructorRegistry.set("aside", HTML_NS, null, HTMLElement);
 assert(/* no entries in the registry have namespace HTML_NS that are not === HTMLElement or instanceof HTMLElement */);
 
 class Element extends Node {
-  constructor(localName, document, namespace = null, prefix = null) {
+  constructor(localName, namespace = null, prefix = null,
+              document = GetFunctionRealm(new.target)@[[globalThis]].document) {
     // TODO: gotta call super() to allocate a Node, but I didn't take the time to specify the Node constructor.
     // Node seems to want a base URL, so maybe that needs to be a constructor parameter? Can it always be derived
     // from the passed document for Element, or does that only work for HTMLElement?
@@ -64,7 +65,7 @@ class Element extends Node {
         `"${localName}" and namespace "${namespace}". Use the ${constructor.name} constructor instead.`);
     }
 
-    this@[[ownerDocument]] = document; // "owner document"
+    this@[[ownerDocument]] = document;
     this@[[localName]] = localName;
     this@[[namespace]] = namespace;
     this@[[prefix]] = prefix;
@@ -76,20 +77,17 @@ class Element extends Node {
   // document.createElement, document.createElementNS, or the parser. If those cases used the constructors directly,
   // that would unnecessarily constrain the signature of the constructor (and the constructor of any subclass!) to
   // always be (localName, document, namespace, prefix).
-  static [Symbol.species](localName, document, namespace, prefix) {
-    return new this(localName, document, namespace, prefix);
+  static [Symbol.species](localName, namespace, prefix, document) {
+    return new this(localName, namespace, prefix, document);
   }
 
   ...
 }
 
 class HTMLElement extends Element {
-  constructor(localName, document, prefix = null) {
+  constructor(localName, prefix, document) {
     if (localName === undefined) {
       throw new TypeError("localName is a required argument");
-    }
-    if (!brandCheck(document, Document)) {
-      throw new TypeError("The document argument is required and must be a Document");
     }
     localName = ToString(localName);
 
@@ -98,43 +96,43 @@ class HTMLElement extends Element {
       localName = ToAsciiLowercase(localName);
     }
 
-    super(localName, document, HTML_NS);
+    super(localName, HTML_NS, prefix, document);
   }
 
-  static [Symbol.species](localName, document, namespace, prefix) {
+  static [Symbol.species](localName, namespace, prefix, document) {
     if (namespace !== HTML_NS) {
       throw new TypeError("HTML elements cannot be created except in the HTML namespace");
     }
-    return new this(localName, document, prefix);
+    return new this(localName, prefix, document);
   }
 
   ...
 }
 
 class HTMLUnkownElement extends HTMLElement {
-  constructor(localName, document, prefix = null) {
+  constructor(localName, prefix, document) {
     if (elementConstructorRegistry.has(localName, HTML_NS)) {
       throw new TypeError(`Cannot create a HTMLUnkownElement with local name "${localName}"`);
     }
 
-    super(localName, document, prefix);
+    super(localName, prefix, document);
   }
 }
 
 // Example of a class with only one entry in the (localName, namespace) -> class table
 class HTMLParagraphElement extends HTMLElement {
-  constructor(document, prefix = null) {
-    super("p", document, prefix);
+  constructor(prefix, document) {
+    super("p", prefix, document);
   }
 
-  static [Symbol.species](localName, document, namespace, prefix) {
+  static [Symbol.species](localName, namespace, prefix, document) {
     if (localName !== "p") {
       throw new TypeError("HTMLParagraphElement must have local name \"p\"");
     }
     if (namespace !== HTML_NS) {
       throw new TypeError("HTMLParagraphElement elements cannot be created except in the HTML namespace");
     }
-    return new this(document, prefix);
+    return new this(prefix, document);
   }
 
   ...
@@ -142,7 +140,7 @@ class HTMLParagraphElement extends HTMLElement {
 
 // Example of a class with more than one entry in the (localName, namespace) -> class table
 class HTMLQuoteElement extends HTMLElement {
-  constructor(localName, document, prefix = null) {
+  constructor(localName, prefix, document) {
     if (localName !== "q" && localName !== "blockquote") {
       throw new TypeError("HTMLQuoteElements must have local name \"q\" or \"blockquote\"");
     }
@@ -150,11 +148,11 @@ class HTMLQuoteElement extends HTMLElement {
     super(localName, document);
   }
 
-  static [Symbol.species](localName, document, namespace, prefix) {
+  static [Symbol.species](localName, namespace, prefix, document) {
     if (namespace !== HTML_NS) {
       throw new TypeError("HTMLParagraphElement elements cannot be created except in the HTML namespace");
     }
-    return new this(localName, document, prefix);
+    return new this(localName, prefix, document);
   }
 
   ...
@@ -177,7 +175,7 @@ class Document extends Node {
 
     const Constructor = elementConstructorRegistry.get(localName, HTML_NS);
     assert(Constructor === HTMLElement || Constructor instanceof HTMLElement);
-    return Constructor[Symbol.species](localName, this, HTML_NS, null);
+    return Constructor[Symbol.species](localName, HTML_NS, null, this);
   }
 
   // These mostly delegate to the constructors, but have more validation checks for whatever reason.
@@ -185,7 +183,7 @@ class Document extends Node {
     const { namespace, prefix, localName, qualifiedName } = validateAndExtract(namespaceArg, qualifiedNameArg);
 
     const Constructor = elementConstructorRegistry.get(localName, namespace);
-    return Constructor[Symbol.species](localName, this, namespace, prefix);
+    return Constructor[Symbol.species](localName, namespace, prefix, this);
   }
 
   ...
@@ -194,56 +192,56 @@ class Document extends Node {
 // Examples:
 
 // Creating arbitrary elements which don't have any class registered for them works fine:
-new Element("foo", document); // namespace = null
-new Element("foo", document, "http://examplens.com/");
-new Element("foo", document, "http://examplens.com/", "prefix");
+new Element("foo"); // namespace = null
+new Element("foo", "http://examplens.com/");
+new Element("foo", "http://examplens.com/", "prefix");
 
 document.createElementNS(null, "foo");
 document.createElementNS("http://examplens.com/", "foo");
 document.createElementNS("http://examplens.com/", "prefix:foo");
 
 // The element constructor is more lenient than createElement on validating names
-new Element("foo`", document); // works
+new Element("foo`"); // works
 document.createElementNS(null, "foo`"); // throws
 
 // Same for HTMLUnknownElement
-new HTMLUnknownElement("foo`", document); // works
+new HTMLUnknownElement("foo`"); // works
 document.createElement("foo`"); // throws
 
 // What about a <p> element?
-new Element("p", document); // works because namespace = null
-new Element("p", document, HTML_NS); // throws TypeError telling you to use new HTMLParagraphElement
-new HTMLElement("p", document); // throws TypeError telling you to use new HTMLParagraphElement
-new HTMLParagraphElement(document); // works!
+new Element("p"); // works because namespace = null
+new Element("p", HTML_NS); // throws TypeError telling you to use new HTMLParagraphElement
+new HTMLElement("p"); // throws TypeError telling you to use new HTMLParagraphElement
+new HTMLParagraphElement(); // works!
 
 // <q> element?
-new Element("q", document, HTML_NS); // throws TypeError telling you to use new HTMLQuoteElement
-new HTMLElement("q", document); // throws TypeError telling you to use new HTMLQuoteElement
-new HTMLQuoteElement("q", document); // works!
+new Element("q", HTML_NS); // throws TypeError telling you to use new HTMLQuoteElement
+new HTMLElement("q"); // throws TypeError telling you to use new HTMLQuoteElement
+new HTMLQuoteElement("q"); // works!
 
 // <section> element?
-new Element("section", document, HTML_NS); // throws TypeError telling you to use new HTMLElement
-new HTMLElement("section", document); // works!
+new Element("section", HTML_NS); // throws TypeError telling you to use new HTMLElement
+new HTMLElement("section"); // works!
 
 document.createElement("p");
 // works of course, giving back a HTMLParagraphElement, by calling
-// `HTMLParagraphElement[Symbol.species]("p", document, HTML_NS, null)` which returns
-// `new HTMLParagraphElement(document, null)`
+// `HTMLParagraphElement[Symbol.species]("p", HTML_NS, null, document)` which returns
+// `new HTMLParagraphElement(null, document)`
 
 document.createElementNS(HTML_NS, "p");
 // works in the same way
 
 document.createElement("q");
 // works, giving back a HTMLQuoteElement, by calling
-// `HTMLQuoteElement[Symbol.species]("q", document, HTML_NS, null)` which returns
-// `new HTMLQuoteElement("q", document, null)`
+// `HTMLQuoteElement[Symbol.species]("q", HTML_NS, null, docuemnt)` which returns
+// `new HTMLQuoteElement("q", null, document)`
 
 document.createElement("section");
 // works, giving back a HTMLElement, by calling
-// `HTMLElement[Symbol.species]("section", document, HTML_NS, null)` which returns
-// `new HTMLElement("section", document, null)`
+// `HTMLElement[Symbol.species]("section", HTML_NS, null, document)` which returns
+// `new HTMLElement("section", null, document)`
 
 document.createElement("foo");
 // works, giving back a HTMLUnkownElement, by calling
-// `HTMLUnkownElement[Symbol.species]("foo", document, HTML_NS, null)` which returns
-// `new HTMLUnkownElement("foo", document, null)`
+// `HTMLUnkownElement[Symbol.species]("foo", HTML_NS, null, document)` which returns
+// `new HTMLUnkownElement("foo", null, document)`
