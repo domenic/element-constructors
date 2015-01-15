@@ -20,4 +20,4 @@ These are the invariants we've written down so far that we are trying to preserv
 
 We also have the following requirements written down so far, with probably many more latent in the design:
 
-1. Any object which could be produced by the HTML parser (or other APIs, but usually the parser is the most lenient) must be able to be produced with the relevant constructor. (If this requirement is in conflict with any of 1-5, please let me know!) An example of this would be that you must be able to create an Element with local name `` a` `` via the `HTMLUnknownElement` constructor, since such an element comes into being via `` document.body.innerHTML = <a`>foo<a`> ``.
+1. Any object which could be produced by the HTML parser (or other APIs, but usually the parser is the most lenient) must be able to be produced with the relevant constructor. (If this requirement is in conflict with any of 1-5, please let me know!) An example of this would be that you must be able to create an Element with local name `` a` `` via the `HTMLUnknownElement` constructor, since such an element comes into being via `` document.body.innerHTML = '<a`>foo<a`>' ``.
