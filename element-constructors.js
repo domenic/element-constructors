@@ -16,11 +16,11 @@ class ElementConstructorRegistry {
 const elementConstructorRegistry = new ElementConstructorRegistry();
 // Register all the elements from all the specs ever here.
 // E.g.:
-elementConstructorRegistry.set("p", HTML_NS, null, HTMLParagraphElement);
-elementConstructorRegistry.set("q", HTML_NS, null, HTMLQuoteElement);
-elementConstructorRegistry.set("blockquote", HTML_NS, null, HTMLQuoteElement);
-elementConstructorRegistry.set("section", HTML_NS, null, HTMLElement);
-elementConstructorRegistry.set("aside", HTML_NS, null, HTMLElement);
+elementConstructorRegistry.set("p", HTML_NS, HTMLParagraphElement);
+elementConstructorRegistry.set("q", HTML_NS, HTMLQuoteElement);
+elementConstructorRegistry.set("blockquote", HTML_NS, HTMLQuoteElement);
+elementConstructorRegistry.set("section", HTML_NS, HTMLElement);
+elementConstructorRegistry.set("aside", HTML_NS, HTMLElement);
 // ...
 
 assert(/* no entries in the registry have namespace HTML_NS that are not === HTMLElement or instanceof HTMLElement */);
