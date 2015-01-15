@@ -99,7 +99,7 @@ class Element extends Node {
   // This symbol will allow subclasses to specify how to create instances of themselves when desired by
   // document.createElement, document.createElementNS, or the parser. If those cases used the constructors directly,
   // that would unnecessarily constrain the signature of the constructor (and the constructor of any subclass!) to
-  // always be (localName, document, namespace, prefix).
+  // always be ({ localName, document, namespace, prefix }).
   static [Symbol.species](localName, namespace, prefix, document) {
     return new this({ localName, namespace, prefix, document });
   }
