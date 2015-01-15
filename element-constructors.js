@@ -29,8 +29,9 @@ class Element extends Node {
   constructor({ localName = undefined, namespace = null, prefix = null,
               document = GetFunctionRealm(new.target)@[[globalThis]].document } = {}) {
     // TODO: gotta call super() to allocate a Node, but I didn't take the time to specify the Node constructor.
-    // Node seems to want a base URL, so maybe that needs to be a constructor parameter? Can it always be derived
-    // from the passed document for Element, or does that only work for HTMLElement?
+    // Node wants a base URL, which might be derivable from the document or might not; see
+    // https://github.com/domenic/element-constructors/issues/4. If it is not derivable, then we need to add another
+    // option (here and in derived classes).
 
     if (!brandCheck(document, Document)) {
       throw new TypeError("The document argument is required and must be a Document");
