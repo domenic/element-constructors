@@ -62,8 +62,8 @@ class Element extends Node {
 
       const Constructor = elementConstructorRegistry.getConstructor(localName, namespace);
       if (Constructor !== new.target) {
-        throw new TypeError(`The Element constructor cannot be used to create elements with local name ` +
-          `"${localName}" and namespace "${namespace}". Use the ${constructor.name} constructor instead.`);
+        throw new TypeError(`The ${new.target.name} constructor cannot be used to create elements with local name ` +
+          `"${localName}" and namespace "${namespace}". Use the ${Constructor.name} constructor instead.`);
       }
     }
 
@@ -133,13 +133,10 @@ class HTMLElement extends Element {
 }
 
 class HTMLUnknownElement extends HTMLElement {
-  constructor({ localName = undefined, prefix = undefined, document = undefined }) {
-    if (elementConstructorRegistry.has(localName, HTML_NS)) {
-      throw new TypeError(`Cannot create a HTMLUnknownElement with local name "${localName}"`);
-    }
-
-    super({ localName, prefix, document });
-  }
+  // Default constructor is fine. Calling `new HTMLUnknownElement({ localName: "foo" })` will work since a lookup
+  // of ("foo", HTML_NS) in the registry returns `HTMLUnknownElement`. But calling
+  // `new HTMLUnknownElement({ localName: "p "})` will not work since looking up ("p", HTML_NS) in the registry returns
+  // `HTMLParagraphElement`.
 }
 
 // Example of a class with only one entry in the (localName, namespace) -> class table
@@ -161,6 +158,8 @@ class HTMLQuoteElement extends HTMLElement {
 // Example of a custom element class
 class CustomElement extends HTMLElement {
   // should not override constructor (or [Symbol.species]).
+
+  ...
 }
 
 class Document extends Node {
