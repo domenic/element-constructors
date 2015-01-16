@@ -167,7 +167,7 @@ class CustomElement extends HTMLElement {
 // SVGElement is identical to HTMLElement except it does not have lowercasing
 class SVGElement extends Element {
   constructor({ localName = undefined, prefix = undefined, document = undefined } = {}) {
-    super({ localName, namespace: HTML_NS, prefix, document });
+    super({ localName, namespace: SVG_NS, prefix, document });
   }
 
   ...
