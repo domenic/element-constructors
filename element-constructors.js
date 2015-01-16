@@ -21,6 +21,8 @@ elementConstructorRegistry.set("q", HTML_NS, HTMLQuoteElement);
 elementConstructorRegistry.set("blockquote", HTML_NS, HTMLQuoteElement);
 elementConstructorRegistry.set("section", HTML_NS, HTMLElement);
 elementConstructorRegistry.set("aside", HTML_NS, HTMLElement);
+// Yes, SVG too
+elementConstructorRegistry.set("rect", SVG_NS, SVGRectElement)
 // ...
 
 assert(/* no entries in the registry have namespace HTML_NS that are not === HTMLElement or instanceof HTMLElement */);
@@ -162,6 +164,20 @@ class CustomElement extends HTMLElement {
   ...
 }
 
+// SVGElement is identical to HTMLElement except it does not have lowercasing
+class SVGElement extends Element {
+  constructor({ localName = undefined, prefix = undefined, document = undefined } = {}) {
+    super({ localName, namespace: SVG_NS, prefix, document });
+  }
+
+  ...
+}
+
+// See HTMLParagraphElement
+class SVGRectElement extends SVGElement {
+  ...
+}
+
 class Document extends Node {
   ...
 
@@ -255,6 +271,9 @@ new CustomElement({ prefix: "prefix", document: someDocument }); // You can also
 new Element({ localName: "custom-el", namespace: HTML_NS }); // throws TypeError telling you to use new CustomElement
 new HTMLElement({ localName: "custom-el" }); // throws TypeError telling you to use new CustomElement
 
+
+// SVG is the same
+new SVGRectElement();
 
 
 // In theory we could allow registering CustomElement for more than one local name. It would work fine. It just would
